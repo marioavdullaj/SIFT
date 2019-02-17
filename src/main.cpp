@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
   }
 
   cout << "Computing the features for each image..." << endl;
-  for(int i = 0; i < 5 + 0*patches_cropped.size(); i++) {
+  for(int i = 0; i < patches_cropped.size(); i++) {
     vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > ft;
     for(int j = 0; j < patches_cropped[i].size(); j++) {
       Mat im = patches_cropped[i][j];
