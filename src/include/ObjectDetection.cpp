@@ -32,7 +32,7 @@ std::vector<cv::DMatch> ObjectDetection::refine_match(std::vector<cv::DMatch> ma
 }
 
 std::vector<cv::DMatch> ObjectDetection::find_matches(double ratio) {
-  std::vector<cv::DMatch> raw_matches,refined_matches,good_matches;
+  std::vector<cv::DMatch> raw_matches,refined_matches;
   cv::Ptr< cv::xfeatures2d::SIFT > sif = cv::xfeatures2d::SIFT::create();
   cv::xfeatures2d::SIFT *s = sif.get();
   cv::Ptr<cv::BFMatcher> matcher = cv::BFMatcher::create(cv::NORM_L2, false);
