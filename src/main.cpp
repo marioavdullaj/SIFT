@@ -139,8 +139,8 @@ vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > load(string fi
 
     vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > ff;
     for(int i = 0; i < size_patch; i++) {
-      vector<KeyPoint> kp;
-      Mat dsc;
+      std::vector<cv::KeyPoint> kp;
+      cv::Mat dsc;
       stringstream ss,ss1;
       ss << "keypoints" << p << "-" << i;
       ss1 << "descriptors" << p << "-" << i;
