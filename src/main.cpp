@@ -75,6 +75,8 @@ int main(int argc, char** argv) {
     features.push_back(ft);
   }
   
+  
+  // Here I assume to have the features vector and I do the computations on it to get training/query dataset
   cv::Mat all_features = features[0][0].second;
   
   
