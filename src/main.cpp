@@ -26,10 +26,8 @@ int main(int argc, char** argv) {
   vector<Mat> obj_images;
   vector<Mat> scene_images;
   vector<Mat> patches;
-  /*
-  scene_images.push_back(imread("data/dataset1/scene1.png"));
-  obj_images.push_back(imread("data/dataset1/obj1.png"));
-  */
+
+  ObjectDetection od;
 
   vector< String > fn;
   stringstream dirname; dirname << "data/notredame";
@@ -48,6 +46,9 @@ int main(int argc, char** argv) {
   int h_size = 64;
 
   vector< vector<Mat> > patches_cropped;
+  vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > features;
+
+  cout << "Cropping the patches" << endl;
   for(int i = 0; i < patches.size(); i++) {
     // We are now analyzing the i-th patch image
     vector<Mat> patch_images;
@@ -60,12 +61,15 @@ int main(int argc, char** argv) {
     patches_cropped.push_back(patch_images);
   }
 
-  // Lets just take the first patch for the moment
-  Mat m = patches_cropped[0][0];
-  ObjectDetection od;
-  std::pair<std::vector<cv::KeyPoint>, cv::Mat> res;
-  res = od.compute_features(m);
-  cout << (res.first).size() << endl;
+  cout << "Computing the features for each image..." << endl;
+  for(int i = 0; i < patches_cropped.size(); i++) {
+    vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > ft;
+    for(int j = 0; j < patches_cropped[i].size(); j++) {
+      Mat im = patches_cropped[i][j];
+      ft.push_back( od.compute_features(im) );
+    }
+    features.push_back(ft);
+  }
 
   return 0;
 }
