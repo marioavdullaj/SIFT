@@ -1,0 +1,3 @@
+/Users/Mario/Desktop/sift/build/CMakeFiles/rebuild_cache.dir
+/Users/Mario/Desktop/sift/build/CMakeFiles/edit_cache.dir
+/Users/Mario/Desktop/sift/build/CMakeFiles/main.dir

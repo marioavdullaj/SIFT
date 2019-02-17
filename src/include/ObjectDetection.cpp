@@ -22,7 +22,7 @@ float ObjectDetection::min_distance(std::vector<cv::DMatch> m) {
   return min;
 }
 
-// This refinement is very useful for removing some 'noise' matching. Used quite a lot paired with the SIFT technique. 
+// This refinement is very useful for removing some 'noise' matching. Used quite a lot paired with the SIFT technique.
 std::vector<cv::DMatch> ObjectDetection::refine_match(std::vector<cv::DMatch> matches, double ratio) {
   float min_d = ObjectDetection::min_distance(matches);
   std::vector<cv::DMatch> temp;
@@ -101,4 +101,20 @@ cv::Mat ObjectDetection::find_object(cv::Mat scn) {
   cv::line( img_matches, scene_corners[3] , scene_corners[0] , cv::Scalar(0, 255, 0), 4 );
 
   return img_matches;
+}
+
+std::pair<std::vector<cv::KeyPoint>, cv::Mat> ObjectDetection::compute_features(cv::Mat obj) {
+  cv::Ptr< cv::xfeatures2d::SIFT > sif = cv::xfeatures2d::SIFT::create();
+  cv::xfeatures2d::SIFT *s = sif.get();
+
+  std::vector<cv::KeyPoint> k_object;
+  cv::Mat d_object;
+
+  s->detect(obj, k_object);
+  s->compute(obj, k_object, d_object);
+
+  std::pair<std::vector<cv::KeyPoint>, cv::Mat> ret;
+  ret = std::make_pair(k_object, d_object);
+
+  return ret;
 }

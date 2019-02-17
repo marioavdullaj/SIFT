@@ -19,6 +19,9 @@ class ObjectDetection {
     void load(cv::Mat);
     cv::Mat find_object(cv::Mat);
     cv::Mat get_object();
+
+    std::pair<std::vector<cv::KeyPoint>, cv::Mat> compute_features(cv::Mat);
+
   private:
     float min_distance(std::vector<cv::DMatch>);
     std::vector<cv::DMatch> refine_match(std::vector<cv::DMatch>, double);
