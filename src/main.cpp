@@ -41,10 +41,12 @@ int main(int argc, char** argv) {
     for(int k = 0; k < scene_images.size(); k++) {
       Mat scene_result = objects[j].find_object(scene_images[k]);
 
+      // Resizing the scene object in order visualize the scene image next to the object one
       double res = ((double) objects[j].get_object().rows) / ((double) scene_result.rows);
       resize(scene_result, scene_result, cv::Size(), res,res);
       hconcat(objects[j].get_object(), scene_result,scene_result);
       if(scene_result.cols > 1200) resize(scene_result,scene_result,cv::Size(), 0.7,0.7);
+      
       show(scene_result, "Result", 1);
       waitKey(0);
       cv::destroyAllWindows();

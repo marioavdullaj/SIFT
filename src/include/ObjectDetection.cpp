@@ -22,6 +22,7 @@ float ObjectDetection::min_distance(std::vector<cv::DMatch> m) {
   return min;
 }
 
+// This refinement is very useful for removing some 'noise' matching. Used quite a lot paired with the SIFT technique. 
 std::vector<cv::DMatch> ObjectDetection::refine_match(std::vector<cv::DMatch> matches, double ratio) {
   float min_d = ObjectDetection::min_distance(matches);
   std::vector<cv::DMatch> temp;
@@ -51,7 +52,20 @@ std::vector<cv::DMatch> ObjectDetection::find_matches(double ratio) {
 
 cv::Mat ObjectDetection::find_homography_matrix() {
   std::vector<cv::Point2f> obj_kpoints, scene_kpoints;
+  /*
+   find_matches(ratio) uses SIFT in order to find the keypoints of both the
+   scene image and object image. The keypoints are found and then the descriptors
+   of these are computed by SIFT library. Finally, we use the BFMatcher library to match
+   these points with a L2 NORM, and refine the matches by removing the onces with a distance
+   higher than the minimum_distance * ratio.
+  */
   std::vector<cv::DMatch> matches = ObjectDetection::find_matches(2);
+
+  /*
+    The class DMatch, returning class of the BFMatcher method, contains the coordinates of the
+    keypoints matches between the object and the scene. Indeed, the fields 'queryIdx', and 'trainIdx'
+    indicates the keypoints which match together.
+  */
   for(int j = 0; j < matches.size(); ++j) {
     obj_kpoints.push_back(keypoints_object[matches[j].queryIdx].pt);
     scene_kpoints.push_back(keypoints_scene[matches[j].trainIdx].pt);
@@ -59,15 +73,20 @@ cv::Mat ObjectDetection::find_homography_matrix() {
   if(!obj_kpoints.size() || !scene_kpoints.size())
     return cv::Mat();
   else
+    // homography of the object keypoints which matched the scene keypoints
     return cv::findHomography(obj_kpoints, scene_kpoints, CV_RANSAC);
 }
 
 cv::Mat ObjectDetection::find_object(cv::Mat scn) {
   scene = scn;
+  // Creating the corners of the object to be recognized inside the scene
   std::vector<cv::Point2f> obj_corners(4);
   obj_corners[0] = cvPoint(0,0); obj_corners[1] = cvPoint(object.cols, 0);
   obj_corners[2] = cvPoint(object.cols, object.rows); obj_corners[3] = cvPoint(0, object.rows);
+
+  // The scene corners will be found given the object corners and the homography matrix
   std::vector<cv::Point2f> scene_corners(4);
+
   cv::Mat H = ObjectDetection::find_homography_matrix();
 
   if( H.empty() )
