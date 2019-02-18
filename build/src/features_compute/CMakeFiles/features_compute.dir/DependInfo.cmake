@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/alessio/SIFT/src/features_compute/features_compute.cpp" "/home/alessio/SIFT/build/src/features_compute/CMakeFiles/features_compute.dir/features_compute.cpp.o"
-  "/home/alessio/SIFT/src/features_compute/include/ObjectDetection.cpp" "/home/alessio/SIFT/build/src/features_compute/CMakeFiles/features_compute.dir/include/ObjectDetection.cpp.o"
+  "/Users/Mario/Desktop/SIFT/src/features_compute/features_compute.cpp" "/Users/Mario/Desktop/SIFT/build/src/features_compute/CMakeFiles/features_compute.dir/features_compute.cpp.o"
+  "/Users/Mario/Desktop/SIFT/src/features_compute/include/ObjectDetection.cpp" "/Users/Mario/Desktop/SIFT/build/src/features_compute/CMakeFiles/features_compute.dir/include/ObjectDetection.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH

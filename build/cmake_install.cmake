@@ -1,4 +1,4 @@
-# Install script for directory: /home/alessio/SIFT
+# Install script for directory: /Users/Mario/Desktop/SIFT
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -27,15 +27,15 @@ if(NOT CMAKE_INSTALL_COMPONENT)
   endif()
 endif()
 
-# Install shared libraries without execute permission?
-if(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
-  set(CMAKE_INSTALL_SO_NO_EXE "1")
+# Is this installation the result of a crosscompile?
+if(NOT DEFINED CMAKE_CROSSCOMPILING)
+  set(CMAKE_CROSSCOMPILING "FALSE")
 endif()
 
 if(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
-  include("/home/alessio/SIFT/build/src/main/cmake_install.cmake")
-  include("/home/alessio/SIFT/build/src/features_compute/cmake_install.cmake")
+  include("/Users/Mario/Desktop/SIFT/build/src/main/cmake_install.cmake")
+  include("/Users/Mario/Desktop/SIFT/build/src/features_compute/cmake_install.cmake")
 
 endif()
 
@@ -47,5 +47,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/alessio/SIFT/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/Users/Mario/Desktop/SIFT/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

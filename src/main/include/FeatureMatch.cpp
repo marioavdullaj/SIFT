@@ -38,11 +38,10 @@ void FeatureMatch::query_train_split(int query_size) {
   std::cout << "Calculating training/query dataset... " << std::flush;
 
   // Initialize the train descriptors (image (0,0) belongs to train dataset!)
-
   int row_number = 0;
   for(int i = 0; i < (int)features.size(); ++i) {
     for(int j = 0; j < (int)features[i].size(); ++j) {
-      if(!is_query[i*256+j]) {
+      if(!is_query[i*features[0].size()+j]) {
         for(int k = 0; k < features[i][j].second.rows; ++k){
           all_features.push_back( features[i][j].second.row(k));
           row_to_descriptor[k+row_number] = std::tuple<int,int,int>(i,j,k);
@@ -117,7 +116,7 @@ std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::hierarchic
   	for(int n_leaf = 0; n_leaf < (int)leaf_size.size(); ++n_leaf) {
   	   for(int n_L = 0; n_L < (int)L_max.size(); ++n_L) {
     			t_start = std::chrono::high_resolution_clock::now();
-    		
+
     			cv::flann::Index hKmean = cv::flann::Index(all_features, cv::flann::HierarchicalClusteringIndexParams( branching[n_branch], cvflann::FLANN_CENTERS_RANDOM, 1, leaf_size[n_leaf]));
     			t_midpoint = std::chrono::high_resolution_clock::now();
     			for(int i = 0; i < number_of_query; ++i)
@@ -194,7 +193,7 @@ void FeatureMatch::imageMatching(cv::Mat* indicies, cv::Mat* dist, int index_of_
 				n_association[idx_image]++;
 				max_val = std::max( n_association[idx_image], max_val);
 			}
-			
+
 			if(max_val >= 5) break;
 		}
 	}

@@ -26,9 +26,9 @@ double precision_computation(Mat*, Mat*, int);
 
 // Main function
 int main(int argc, char** argv) {
-	
+
   std::srand(std::time(nullptr));
-  
+
   string filename("features_data");
   vector< vector<Mat> > patches_cropped = load_patches("data/notredame",64,64);
   cout << "Loading the features.." << endl;
@@ -49,14 +49,16 @@ int main(int argc, char** argv) {
 
 
   // Hierarchical k-means clustering
-  std::vector<int> branching{1};
+  std::vector<int> branching{16};
   std::vector<int> leaf_size{150};
-  std::vector<int> L_max{5};
-  
- // std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
+  std::vector<int> L_max{5000};
 
-  for(int i = 0; i < number_of_query; ++i){
-	fm.imageMatching(&truth_indicies[i], &truth_distance[i], i);
+ 	std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
+  std::vector<cv::Mat> indicies = hier_ind_dist.first;
+  std::vector<cv::Mat> distance = hier_ind_dist.second;
+
+  for(int i = 0; i < number_of_query; ++i) {
+		fm.imageMatching(&indicies[i], &distance[i], i);
   }
   return 0;
 }

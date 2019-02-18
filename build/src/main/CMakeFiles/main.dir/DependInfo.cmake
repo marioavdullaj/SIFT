@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_CXX
-  "/home/alessio/SIFT/src/main/include/FeatureMatch.cpp" "/home/alessio/SIFT/build/src/main/CMakeFiles/main.dir/include/FeatureMatch.cpp.o"
-  "/home/alessio/SIFT/src/main/main.cpp" "/home/alessio/SIFT/build/src/main/CMakeFiles/main.dir/main.cpp.o"
+  "/Users/Mario/Desktop/SIFT/src/main/include/FeatureMatch.cpp" "/Users/Mario/Desktop/SIFT/build/src/main/CMakeFiles/main.dir/include/FeatureMatch.cpp.o"
+  "/Users/Mario/Desktop/SIFT/src/main/main.cpp" "/Users/Mario/Desktop/SIFT/build/src/main/CMakeFiles/main.dir/main.cpp.o"
   )
-set(CMAKE_CXX_COMPILER_ID "GNU")
+set(CMAKE_CXX_COMPILER_ID "Clang")
 
 # The include file search paths:
 set(CMAKE_CXX_TARGET_INCLUDE_PATH
