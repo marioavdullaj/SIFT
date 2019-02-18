@@ -14,22 +14,15 @@
 #include <opencv2/ccalib.hpp>
 #include <map>
 #include <opencv2/stitching.hpp>
+#include "include/FeatureMatch.h"
+#include <chrono>
 
 using namespace std;
 using namespace cv;
 
-void show(Mat m, string name, double res) {
-  resize(m, m, cv::Size(), res, res);
-  namedWindow(name, CV_WINDOW_AUTOSIZE); imshow(name, m);
-  return;
-}
-
-Mat descriptor_from_query( std::pair<std::vector<cv::KeyPoint>, cv::Mat> x){
-	return 1.0/512*x.second;
-}
-
 vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > load(string);
 vector< vector<Mat> > load_patches(string, int, int);
+double precision_computation(Mat*, Mat*, int);
 
 // Main function
 int main(int argc, char** argv) {
@@ -38,126 +31,32 @@ int main(int argc, char** argv) {
   cout << "Loading the features.." << endl;
   vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > features = load(filename);
 
-  // Here I assume to have the features vector and I do the computations on it to get training/query dataset
-  cv::Mat all_features = features[0][0].second;
 
-  cout << "continuing..." << endl;
-  // Compute the total number of images
-  int total_images = 0;
-  for(int i = 0; i < (int)features.size(); ++i)
-	total_images+=(int)features[i].size();
-  cout << "Total number of images: " << total_images << endl;
-  // Construct a map to decide whether an image belongs to query dataset
-  double p = 0.05; // Percent of dataset to be taken as query
-  int query_indexes[total_images];
-  for(int i = 0; i < total_images; ++i)
-	query_indexes[i] = i;
-  random_shuffle(query_indexes,query_indexes+total_images);
-  int total_query = (int)(p*total_images);
-  map<int,bool> is_query;;
-  for(int i = 0; i < total_query; ++i)
-	if(query_indexes[i] != 0)
-		is_query[ query_indexes[i]] = true;
+  FeatureMatch fm(patches_cropped, features);
+  int number_of_query = 5;
+  fm.query_train_split(number_of_query);
 
-  cout << "Calculating training/query dataset... " << std::flush;
+  // Number of nearest neighbors
+  int knn = 10;
 
-  map< int, tuple<int,int,int> > row_to_descriptor;
-  map< int, tuple<int,int> > query_to_image;
-  vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > query_images;
-  // Initialize the train descriptors (image (0,0) belongs to train dataset!)
-  Mat train_descriptors = features[0][0].second;
-  int row_number = 0;
-
-  for(int k = 0; k < features[0][0].second.rows; ++k)
-	row_to_descriptor[k] = tuple<int,int,int>(0,0,k);
-  row_number+= features[0][0].second.rows;
-  for(int i = 0; i < (int)features.size(); ++i)
-	for(int j = 0; j < (int)features[i].size(); ++j){
-		if(i == 0 && j == 0) continue;
-		if(!is_query[i*256+j]){
-			vconcat(all_features,features[i][j].second,all_features);
-			for(int k = 0; k < features[i][j].second.rows; ++k)
-				row_to_descriptor[k+row_number] = tuple<int,int,int>(i,j,k);
-			row_number+=features[i][j].second.rows;
-		}else{
-			query_images.push_back(features[i][j]);
-			query_to_image[ (int)query_images.size() - 1] = tuple<int,int>(i,j);
-
-		}
-	}
-  cout << "DONE!" << endl;
-
-  // Normalize the training matrix!
-  all_features = 1.0/512*all_features;
+  // Linear KNN (Also used to compute ground truth)
+  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > linear_ind_dist = fm.linear_knn(knn);
+  std::vector<cv::Mat> truth_indicies = linear_ind_dist.first;
+  std::vector<cv::Mat> truth_distance = linear_ind_dist.second;
 
 
-  cout << "Total number of query images: " <<  query_images.size() << endl;
+  // Hierarchical k-means clustering
+  std::vector<int> branching{2,4,8,16,32};
+  std::vector<int> leaf_size{16,64,128,256};
+  std::vector<int> L_max{20, 30, 40, 50, 60, 70, 80};
 
+  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
 
-  cout << "Trying to linear search " << endl;
-
-  //Do some magic here :D
-  flann::Index linear_index = flann::Index(all_features,flann::LinearIndexParams());
-
-  cout << "Done!" << endl;
-  int knn = 20;
-  Mat desc_query = descriptor_from_query( query_images[3]);
-  cout << desc_query << endl;
-  Mat indicies(desc_query.rows, knn, CV_64F);
-  Mat distance(desc_query.rows, knn, CV_64F);
-
-  linear_index.knnSearch(desc_query, indicies,distance,knn);
-  cout << desc_query.rows << " " << endl;
-  cout << distance.rows << " " << distance.cols << endl;
-
-
-  for(int i = 0; i < desc_query.rows; ++i){
-	cout << "ROW " << i << ": ";
-	for(int j = 0; j < distance.cols; ++j)
-		cout << distance.at<float>(i,j) << " ";
-	cout << endl;
-	}
-
-	for(int i = 0; i < desc_query.rows; ++i){
-		cout << "ROW " << i << ": ";
-		for(int j = 0; j < distance.cols; ++j)
-			cout << get<0>(row_to_descriptor[ indicies.at<int>(i,j)]) << " "  << get<1>(row_to_descriptor[ indicies.at<int>(i,j)])  << " " << get<2>(row_to_descriptor[ indicies.at<int>(i,j)]) << ") ";
-		cout << endl;
-	}
-
-  int where = -1;
-  float dist = 1232142;
-  int rMATCH;
-  int cMATCH;
-  map< pair<int,int> ,int> image_matches;
-  for(int j = 0; j < distance.cols; ++j){
-
-	for(int i =0 ; i < distance.rows; ++i){
-		int r = get<0>(row_to_descriptor[ indicies.at<int>(i,j)]);
-		int c = get<1>(row_to_descriptor[ indicies.at<int>(i,j)]);
-		image_matches[ pair<int,int>(r,c)]++;
-		if(image_matches[pair<int,int>(r,c)] >= 3){
-			rMATCH = r;
-			cMATCH = c;
-			cout << " FOUND STRONG MATCH " << r << " " << c << endl;
-			i = 1232412;
-			j = 3214211;
-		}
-	}
-  }
-
-
-  int ii, jj;
-  ii = get<0>(query_to_image[1]); jj = get<0>(query_to_image[1]);
-  show(patches_cropped[ii][jj],"Query",1);
-  waitKey(0);
-  cout << dist << endl;
-  show(patches_cropped[rMATCH][cMATCH],"Best match",1);
-  waitKey(0);
-  cv::destroyAllWindows();
-
+  int index_of_query = 0;
+  fm.imageMatching(&truth_indicies[index_of_query], &truth_distance[index_of_query], index_of_query);
   return 0;
 }
+
 
 vector< vector<Mat> > load_patches(string dir, int w_size, int h_size) {
   vector<Mat> patches;

@@ -27,6 +27,7 @@ void show(Mat m, string name, double res) {
 vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > load(string);
 void save(vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > >, string);
 
+int num_patches, images_per_patch;
 
 // Main function
 int main(int argc, char** argv) {
@@ -66,11 +67,16 @@ int main(int argc, char** argv) {
     patches_cropped.push_back(patch_images);
   }
 
+  cout << "Found " << patches.size() << " patches: how many to select for SIFT computation?: ";
+  cin >> num_patches;
+  cout << "How many images per patch? (each patch has " << patches_cropped[0].size() << " images): ";
+  cin >> images_per_patch;
+
   cout << "Computing the features for each image..." << endl;
-  for(int i = 0; i < patches_cropped.size(); i++) {
-    cout << ((double) i / patches_cropped.size()) * 100 << " %" << endl;
+  for(int i = 0; i < num_patches; i++) {
+    cout << ((double) i / num_patches) * 100 << " %" << endl;
     vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > ft;
-    for(int j = 0; j < patches_cropped[i].size(); j++) {
+    for(int j = 0; j < images_per_patch; j++) {
       Mat im = patches_cropped[i][j];
       ft.push_back( od.compute_features(im) );
     }
@@ -89,8 +95,8 @@ void save(vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > feat
   cv::write(store, "num_patches", (int) features.size());
   for(int p = 0; p < features.size(); ++p) {
     stringstream patch_size; patch_size << "size_patch_" << p;
-    cv::write(store, patch_size.str(), (int) (50+0*features[p].size()));
-    for(int i = 0; i < 50+0*features[p].size(); i++) {
+    cv::write(store, patch_size.str(), (int) (features[p].size()));
+    for(int i = 0; i < features[p].size(); i++) {
       stringstream ss, ss1;
       ss << "keypoints" << p << "-" << i;
       ss1 << "descriptors" << p << "-" << i;
