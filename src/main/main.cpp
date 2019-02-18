@@ -26,6 +26,9 @@ double precision_computation(Mat*, Mat*, int);
 
 // Main function
 int main(int argc, char** argv) {
+	
+  std::srand(std::time(nullptr));
+  
   string filename("features_data");
   vector< vector<Mat> > patches_cropped = load_patches("data/notredame",64,64);
   cout << "Loading the features.." << endl;
@@ -33,11 +36,11 @@ int main(int argc, char** argv) {
 
 
   FeatureMatch fm(patches_cropped, features);
-  int number_of_query = 5;
+  int number_of_query = 10;
   fm.query_train_split(number_of_query);
 
   // Number of nearest neighbors
-  int knn = 10;
+  int knn = 8;
 
   // Linear KNN (Also used to compute ground truth)
   std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > linear_ind_dist = fm.linear_knn(knn);
@@ -46,14 +49,15 @@ int main(int argc, char** argv) {
 
 
   // Hierarchical k-means clustering
-  std::vector<int> branching{2,4,8,16,32};
-  std::vector<int> leaf_size{16,64,128,256};
-  std::vector<int> L_max{20, 30, 40, 50, 60, 70, 80};
+  std::vector<int> branching{1};
+  std::vector<int> leaf_size{150};
+  std::vector<int> L_max{5};
+  
+ // std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
 
-  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
-
-  int index_of_query = 0;
-  fm.imageMatching(&truth_indicies[index_of_query], &truth_distance[index_of_query], index_of_query);
+  for(int i = 0; i < number_of_query; ++i){
+	fm.imageMatching(&truth_indicies[i], &truth_distance[i], i);
+  }
   return 0;
 }
 

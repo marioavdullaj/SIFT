@@ -31,20 +31,13 @@ void FeatureMatch::query_train_split(int query_size) {
     query_indexes[i] = i;
   }
   std::random_shuffle(query_indexes,query_indexes+tot_images);
-
   std::map<int,bool> is_query;
   for(int i = 0; i < query_size; ++i)
-  	if(query_indexes[i] != 0)
   		is_query[ query_indexes[i]] = true;
 
   std::cout << "Calculating training/query dataset... " << std::flush;
 
   // Initialize the train descriptors (image (0,0) belongs to train dataset!)
-  all_features = features[0][0].second;
-  cv::Mat train_descriptors = features[0][0].second;
-
-  for(int k = 0; k < features[0][0].second.rows; ++k)
-	 row_to_descriptor[k] = std::tuple<int,int,int>(0,0,k);
 
   int row_number = 0;
   for(int i = 0; i < (int)features.size(); ++i) {
@@ -124,14 +117,14 @@ std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::hierarchic
   	for(int n_leaf = 0; n_leaf < (int)leaf_size.size(); ++n_leaf) {
   	   for(int n_L = 0; n_L < (int)L_max.size(); ++n_L) {
     			t_start = std::chrono::high_resolution_clock::now();
-    			// We use 11 iterations
-    			cv::flann::Index hKmean = cv::flann::Index(all_features, cv::flann::KMeansIndexParams( branching[n_branch], 11, cvflann::FLANN_CENTERS_RANDOM, 0.2));
+    		
+    			cv::flann::Index hKmean = cv::flann::Index(all_features, cv::flann::HierarchicalClusteringIndexParams( branching[n_branch], cvflann::FLANN_CENTERS_RANDOM, 1, leaf_size[n_leaf]));
     			t_midpoint = std::chrono::high_resolution_clock::now();
     			for(int i = 0; i < number_of_query; ++i)
     				hKmean.knnSearch(desc_query[i], indicies[i], distance[i], knn, cv::flann::SearchParams(L_max[n_L]));
     			t_end = std::chrono::high_resolution_clock::now();
 
-    			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_start).count();
+    			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_midpoint).count();
     			auto build_duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_midpoint - t_start).count();
 
           std::cout << "kMean search (B = " << branching[n_branch] << ", Leaf = " << leaf_size[n_leaf] << ", L_max = " << L_max[n_L] << "): " << duration << " (build:" << build_duration << ")" <<  std::endl;
@@ -174,7 +167,7 @@ double FeatureMatch::precision_computation(std::vector<cv::Mat> truth_indicies, 
 }
 
 void FeatureMatch::imageMatching(cv::Mat* indicies, cv::Mat* dist, int index_of_query) {
-	std::pair<int,int> idx_query( std::get<0>(query_to_image[index_of_query]), std::get<1>(query_to_image[index_of_query]));
+  std::pair<int,int> idx_query( std::get<0>(query_to_image[index_of_query]), std::get<1>(query_to_image[index_of_query]));
   std::map< int, std::tuple<int,int,int> >* row_to_idx = &(this->row_to_descriptor);
   std::vector< std::vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > >* features = &(this->features);
   std::vector< std::vector<cv::Mat> >* images = &(this->patches);
@@ -189,14 +182,20 @@ void FeatureMatch::imageMatching(cv::Mat* indicies, cv::Mat* dist, int index_of_
 
 	std::map< std::pair<int,int>, std::vector< std::pair<int,int> > > keypoint_association;
 	std::map< std::pair<int,int>, int> n_association;
-	for(int i = 0; i < q_features; ++i){
-		// Good matching definition (Lowe test is not suitable as there are multiple images of the same object)
-		if( dist->at<double>(i,0) < std::max(2*min_dist,0.02)){
-			std::tuple<int,int,int> tup = row_to_idx->at( indicies->at<int>(i,0));
-			std::pair<int,int> idx_image( std::get<0>(tup), std::get<1>(tup));
-			int n_descriptor = std::get<2>(tup);
-			keypoint_association[ idx_image].push_back(std::make_pair( i, n_descriptor));
-			n_association[idx_image]++;
+	int max_val = 0;
+	for(int j = 0; j < knn; ++j){
+		for(int i = 0; i < q_features; ++i){
+			// Good matching definition (Lowe test is not suitable as there are multiple images of the same object)
+			if( dist->at<double>(i,j) < std::max(2*min_dist,0.02)){
+				std::tuple<int,int,int> tup = row_to_idx->at( indicies->at<int>(i,j));
+				std::pair<int,int> idx_image( std::get<0>(tup), std::get<1>(tup));
+				int n_descriptor = std::get<2>(tup);
+				keypoint_association[ idx_image].push_back(std::make_pair( i, n_descriptor));
+				n_association[idx_image]++;
+				max_val = std::max( n_association[idx_image], max_val);
+			}
+			
+			if(max_val >= 5) break;
 		}
 	}
 
@@ -213,7 +212,7 @@ void FeatureMatch::imageMatching(cv::Mat* indicies, cv::Mat* dist, int index_of_
 		std::cout << "What is a match?! " << pr->second << std::endl;
 		return;
 	} else
-		std::cout << "Found " << pr->second << " possible matching with image " << pr->first.first << " " << pr->first.second << std::endl;
+		std::cout << "Found " << pr->second << " possible matching with image " << pr->first.first << " " << pr->first.second << " ( query: " << idx_query.first << " " << idx_query.second << ")" <<  std::endl;
 
 	std::vector< cv::DMatch > good_matches;
 	std::pair<int,int> keyy( pr->first.first, pr->first.second);

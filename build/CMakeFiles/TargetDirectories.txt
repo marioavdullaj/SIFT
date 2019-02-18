@@ -1,0 +1,8 @@
+/home/alessio/SIFT/build/CMakeFiles/edit_cache.dir
+/home/alessio/SIFT/build/CMakeFiles/rebuild_cache.dir
+/home/alessio/SIFT/build/src/main/CMakeFiles/rebuild_cache.dir
+/home/alessio/SIFT/build/src/main/CMakeFiles/edit_cache.dir
+/home/alessio/SIFT/build/src/main/CMakeFiles/main.dir
+/home/alessio/SIFT/build/src/features_compute/CMakeFiles/edit_cache.dir
+/home/alessio/SIFT/build/src/features_compute/CMakeFiles/rebuild_cache.dir
+/home/alessio/SIFT/build/src/features_compute/CMakeFiles/features_compute.dir

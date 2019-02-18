@@ -1,0 +1,22 @@
+[
+{
+  "directory": "/home/alessio/SIFT/build/src/main",
+  "command": "/usr/bin/c++    -isystem /usr/local/include -isystem /usr/local/include/opencv -I/home/alessio/SIFT/src/features_compute/include   -std=c++11   -std=gnu++11 -o CMakeFiles/main.dir/main.cpp.o -c /home/alessio/SIFT/src/main/main.cpp",
+  "file": "/home/alessio/SIFT/src/main/main.cpp"
+},
+{
+  "directory": "/home/alessio/SIFT/build/src/main",
+  "command": "/usr/bin/c++    -isystem /usr/local/include -isystem /usr/local/include/opencv -I/home/alessio/SIFT/src/features_compute/include   -std=c++11   -std=gnu++11 -o CMakeFiles/main.dir/include/FeatureMatch.cpp.o -c /home/alessio/SIFT/src/main/include/FeatureMatch.cpp",
+  "file": "/home/alessio/SIFT/src/main/include/FeatureMatch.cpp"
+},
+{
+  "directory": "/home/alessio/SIFT/build/src/features_compute",
+  "command": "/usr/bin/c++    -isystem /usr/local/include -isystem /usr/local/include/opencv -I/home/alessio/SIFT/src/features_compute/include   -std=c++11   -std=gnu++11 -o CMakeFiles/features_compute.dir/features_compute.cpp.o -c /home/alessio/SIFT/src/features_compute/features_compute.cpp",
+  "file": "/home/alessio/SIFT/src/features_compute/features_compute.cpp"
+},
+{
+  "directory": "/home/alessio/SIFT/build/src/features_compute",
+  "command": "/usr/bin/c++    -isystem /usr/local/include -isystem /usr/local/include/opencv -I/home/alessio/SIFT/src/features_compute/include   -std=c++11   -std=gnu++11 -o CMakeFiles/features_compute.dir/include/ObjectDetection.cpp.o -c /home/alessio/SIFT/src/features_compute/include/ObjectDetection.cpp",
+  "file": "/home/alessio/SIFT/src/features_compute/include/ObjectDetection.cpp"
+}
+]
