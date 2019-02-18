@@ -13,7 +13,7 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/ccalib.hpp>
 #include <opencv2/stitching.hpp>
-#include "include/ObjectDetection.h"
+#include "../include/ObjectDetection.h"
 
 using namespace std;
 using namespace cv;
@@ -30,11 +30,9 @@ void save(vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > >, str
 
 // Main function
 int main(int argc, char** argv) {
-  vector<Mat> obj_images;
-  vector<Mat> scene_images;
   vector<Mat> patches;
-
   ObjectDetection od;
+  string filename("features_data");
 
   vector< String > fn;
   stringstream dirname; dirname << "data/notredame";
@@ -70,6 +68,7 @@ int main(int argc, char** argv) {
 
   cout << "Computing the features for each image..." << endl;
   for(int i = 0; i < patches_cropped.size(); i++) {
+    cout << ((double) i / patches_cropped.size()) * 100 << " %" << endl;
     vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > ft;
     for(int j = 0; j < patches_cropped[i].size(); j++) {
       Mat im = patches_cropped[i][j];
@@ -78,28 +77,10 @@ int main(int argc, char** argv) {
     features.push_back(ft);
   }
 
+  cout << "Saving features into file..." << endl;
   save(features, "features_data");
 
-// to load the feaures now:
-/*
-  vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > features = load("features_data");
-*/
 
-/*
-  // Here I assume to have the features vector and I do the computations on it to get training/query dataset
-  cv::Mat all_features = features[0][0].second;
-
-
-  for(int i = 0; i < (int)features.size(); ++i)
-	for(int j = 0; j < (int)features[i].size(); ++j)
-		if(i!=0 && j!= 0)
-			vconcat(all_features,features[i][j].second,all_features);
-
-  cout << all_features.rows << " " << all_features.cols << endl;
-
-  //Do some magic here :D
-  flann::Index linear_index = flann::Index(all_features,flann::LinearIndexParams());
-*/
   return 0;
 }
 
@@ -108,8 +89,8 @@ void save(vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > feat
   cv::write(store, "num_patches", (int) features.size());
   for(int p = 0; p < features.size(); ++p) {
     stringstream patch_size; patch_size << "size_patch_" << p;
-    cv::write(store, patch_size.str(), (int) features[p].size());
-    for(int i = 0; i < features[p].size(); i++) {
+    cv::write(store, patch_size.str(), (int) (50+0*features[p].size()));
+    for(int i = 0; i < 50+0*features[p].size(); i++) {
       stringstream ss, ss1;
       ss << "keypoints" << p << "-" << i;
       ss1 << "descriptors" << p << "-" << i;
