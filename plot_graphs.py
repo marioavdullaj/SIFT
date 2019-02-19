@@ -35,25 +35,92 @@ print(leaf_size);
 print("trees values: ");
 print(trees)
 
-branching_selected = branching[0]
-leaf_size_selected = leaf_size[0]
-trees_selected = trees[0]
+# PLOTTING THE TREE-DEPENDENCY GRAPH
+print("\n\nTrees graph - select parameters")
+print("Select branching value: ")
+branching_selected = input()
+print("Select leaf size value: ")
+leaf_size_selected = input()
 
-index = str(branching_selected)+'-'+str(leaf_size_selected)+'-'+str(trees_selected)
-L_max_selected = dataMap['L_max'+index].replace('"','').split(",")
+plt.figure(1)
+for t in trees:
+    prec = []
+    speedup = []
+    index = str(branching_selected)+'-'+str(leaf_size_selected)+'-'+str(t)
+    L_max_selected = dataMap['L_max'+index].replace('"','').split(",")
+    for i in range(len(L_max_selected)):
+        ind = index+'-'+L_max_selected[i]
+        p = dataMap['precision'+ind]
+        dur = dataMap['duration'+ind]
+        prec.append(p)
+        speedup.append(1.0*duration_linear/dur)
+    plt.plot(prec, speedup, marker='o', markersize=5, label = 'tree = '+str(t))
 
-prec = []
-speedup = []
+plt.legend()
+plt.xlim(left=0.4)
+plt.xlim(right=1)
+plt.ylim(bottom=1)
+plt.yscale('log')
+plt.xlabel('precision')
+plt.ylabel('speedup')
+plt.show()
 
-for i in range(len(L_max_selected)):
-    ind = index+'-'+L_max_selected[i]
-    p = dataMap['precision'+ind]
-    dur = dataMap['duration'+ind]
-    prec.append(p)
-    speedup.append(1.0*duration_linear/dur)
 
-plt.figure(6)
-plt.plot(prec, speedup, marker='o', markersize=5)
+# PLOTTING THE BRANCH-DEPENDENCY GRAPH
+print("\n\nBranch graph - select parameters")
+print("Select tree value: ")
+tree_selected = input()
+print("Select leaf size value: ")
+leaf_size_selected = input()
+
+plt.figure(2)
+for b in branching:
+    prec = []
+    speedup = []
+    index = str(b)+'-'+str(leaf_size_selected)+'-'+str(tree_selected)
+    L_max_selected = dataMap['L_max'+index].replace('"','').split(",")
+    for i in range(len(L_max_selected)):
+        ind = index+'-'+L_max_selected[i]
+        p = dataMap['precision'+ind]
+        dur = dataMap['duration'+ind]
+        prec.append(p)
+        speedup.append(1.0*duration_linear/dur)
+    plt.plot(prec, speedup, marker='o', markersize=5, label = 'branching = '+str(b))
+
+plt.legend()
+plt.xlim(left=0.4)
+plt.xlim(right=1)
+plt.ylim(bottom=1)
+plt.yscale('log')
+plt.xlabel('precision')
+plt.ylabel('speedup')
+plt.show()
+
+# PLOTTING THE LEAF SIZE-DEPENDENCY GRAPH
+print("\n\nLeaf-size graph - select parameters")
+print("Select branch value: ")
+branching_selected = input()
+print("Select tree value: ")
+tree_selected = input()
+
+plt.figure(3)
+for l in leaf_size:
+    prec = []
+    speedup = []
+    index = str(branching_selected)+'-'+str(l)+'-'+str(tree_selected)
+    L_max_selected = dataMap['L_max'+index].replace('"','').split(",")
+    for i in range(len(L_max_selected)):
+        ind = index+'-'+L_max_selected[i]
+        p = dataMap['precision'+ind]
+        dur = dataMap['duration'+ind]
+        prec.append(p)
+        speedup.append(1.0*duration_linear/dur)
+    plt.plot(prec, speedup, marker='o', markersize=5, label = 'leaf size = '+str(l))
+
+plt.legend()
+plt.xlim(left=0.4)
+plt.xlim(right=1)
+plt.ylim(bottom=1)
 plt.yscale('log')
 plt.xlabel('precision')
 plt.ylabel('speedup')
