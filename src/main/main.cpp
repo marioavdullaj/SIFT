@@ -23,17 +23,16 @@ using namespace cv;
 vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > load(string);
 vector< vector<Mat> > load_patches(string, int, int);
 double precision_computation(Mat*, Mat*, int);
-
+void save_results(double, std::vector<int>, std::vector<int>, std::vector<int>, std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > >, string);
 // Main function
 int main(int argc, char** argv) {
 
   std::srand(std::time(nullptr));
 
-  string filename("features_data");
+  string filename("features_data.yaml");
   vector< vector<Mat> > patches_cropped = load_patches("data/notredame",64,64);
   cout << "Loading the features.." << endl;
   vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > features = load(filename);
-
 
   FeatureMatch fm(patches_cropped, features);
   int number_of_query = 10;
@@ -43,23 +42,45 @@ int main(int argc, char** argv) {
   int knn = 8;
 
   // Linear KNN (Also used to compute ground truth)
-  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > linear_ind_dist = fm.linear_knn(knn);
-  std::vector<cv::Mat> truth_indicies = linear_ind_dist.first;
-  std::vector<cv::Mat> truth_distance = linear_ind_dist.second;
+  std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>, double > linear_ind_dist = fm.linear_knn(knn);
+  std::vector<cv::Mat> truth_indicies = std::get<0>(linear_ind_dist);
+  std::vector<cv::Mat> truth_distance = std::get<1>(linear_ind_dist);
+	double duration_linear = std::get<2>(linear_ind_dist);
 
 
   // Hierarchical k-means clustering
-  std::vector<int> branching{16};
-  std::vector<int> leaf_size{150};
-  std::vector<int> L_max{5000};
+  std::vector<int> branching{2,4,8,16,32,64};
+  std::vector<int> leaf_size{16,150,500};
+  std::vector<int> trees{1,2,3,4,8,16};
 
- 	std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, L_max, knn);
-  std::vector<cv::Mat> indicies = hier_ind_dist.first;
-  std::vector<cv::Mat> distance = hier_ind_dist.second;
+ 	std::tuple< std::vector<cv::Mat>,
+							std::vector<cv::Mat>,
+							std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > >
+						> hier_ind_dist = fm.hierarchical_knn_vs_linear(truth_indicies, branching, leaf_size, trees, knn);
 
+/*
+	The performance data structure is a 3-dimensional data structure of pair values
+	which contains for each branching value, leaf_size value and trees value the
+	performance of the Hierarchical kmeans compared to the linear knn one.
+	Specifically, the values of the pairs are relative to the duration time and the precision.
+*/
+	std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > >
+		performance = std::get<2>(hier_ind_dist);
+
+/*
+	These are the indicies and the distance of the last branching, leaf_size and trees parameters.
+	The compute them all do some cycles in the main giving single parameters to the method.
+*/
+//  std::vector<cv::Mat> indicies = std::get<0>(hier_ind_dist);
+//  std::vector<cv::Mat> distance = std::get<1>(hier_ind_dist);
+
+/*
   for(int i = 0; i < number_of_query; ++i) {
-		fm.imageMatching(&indicies[i], &distance[i], i);
+		fm.imageMatching(&truth_indicies[i], &truth_distance[i], i);
   }
+*/
+
+	save_results(duration_linear, branching, leaf_size, trees, performance, "results.yaml");
   return 0;
 }
 
@@ -94,6 +115,59 @@ vector< vector<Mat> > load_patches(string dir, int w_size, int h_size) {
     patches_cropped.push_back(patch_images);
   }
   return patches_cropped;
+}
+
+void save_results(double duration_linear,
+									std::vector<int> branching,
+									std::vector<int> leaf_size,
+									std::vector<int> trees,
+									std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > > performance,
+									string filename)
+{
+  cv::FileStorage store(filename, cv::FileStorage::WRITE);
+  cv::write(store, "duration_linear", (double) duration_linear);
+
+	stringstream s; s << branching[0];
+	for(int i = 1; i < branching.size(); i++)
+		s << "," << branching[i];
+	cv::write(store, "branching", (string) s.str());
+
+	s.str(""); s << leaf_size[0];
+	for(int i = 1; i < leaf_size.size(); i++)
+		s << "," << leaf_size[i];
+	cv::write(store, "leaf_size", (string) s.str());
+
+	s.str(""); s << trees[0];
+	for(int i = 1; i < trees.size(); i++)
+		s << "," << trees[i];
+	cv::write(store, "trees", (string) s.str());
+
+  for(int b = 0; b < branching.size(); b++) {
+    for(int l = 0; l < leaf_size.size(); l++) {
+			for(int t = 0; t < trees.size(); t++) {
+
+				stringstream ss1, ss2; ss1 << std::get<0>(performance[b][l][t][0]);
+				for(int i = 1; i < performance[b][l][t].size(); i++)
+					ss1 << "," << std::get<0>(performance[b][l][t][i]);
+				ss2 << "L_max" << branching[b] << "-" << leaf_size[l] << "-" << trees[t];
+				cv::write(store, ss2.str(), (string) ss1.str());
+
+				for(int lm = 0; lm < performance[b][l][t].size(); lm++) {
+		      stringstream ss;
+					ss << "duration" << branching[b] << "-" << leaf_size[l] << "-" << trees[t] << "-" << std::get<0>(performance[b][l][t][lm]);
+					cv::write(store, ss.str(), (int) std::get<1>(performance[b][l][t][lm]) );
+					ss.str("");
+
+					ss << "precision" << branching[b] << "-" << leaf_size[l] << "-" << trees[t] << "-" << std::get<0>(performance[b][l][t][lm]);
+					cv::write(store, ss.str(), (double) std::get<2>(performance[b][l][t][lm]) );
+					ss.str("");
+				}
+			}
+    }
+  }
+  store.release();
+
+  return;
 }
 
 vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > load(string filename) {

@@ -71,7 +71,7 @@ std::vector<cv::Mat> FeatureMatch::get_desc_query() {
   return desc_query;
 }
 
-std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::linear_knn(int knn) {
+std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>, double > FeatureMatch::linear_knn(int knn) {
   std::vector<cv::Mat> indicies, distance;
   std::chrono::high_resolution_clock::time_point t_start,t_end,t_midpoint;
 
@@ -91,19 +91,21 @@ std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::linear_knn
   auto truth_duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_start).count();
   std::cout << "Linear search KNN duration: " << truth_duration << std::endl;
 
-  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > ret;
-  return ret = std::make_pair(indicies, distance);
+  std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>, double > ret;
+  linear_duration = truth_duration;
+  return ret = std::make_tuple(indicies, distance, truth_duration);
 }
 
-std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::hierarchical_knn_vs_linear(
+std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>,  std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > > >
+FeatureMatch::hierarchical_knn_vs_linear(
   std::vector<cv::Mat> truth_indicies,
   std::vector<int> branching,
   std::vector<int> leaf_size,
-  std::vector<int> L_max,
+  std::vector<int> trees,
   int knn)
 {
   std::vector<cv::Mat> indicies, distance;
-  std::chrono::high_resolution_clock::time_point t_start,t_end,t_midpoint;
+  std::chrono::high_resolution_clock::time_point t_start,t_end,t_midpoint, t_end_build;
 
   for(int i = 0; i < number_of_query; ++i){
   	indicies.push_back(cv::Mat(query_images[i].first.size(),knn,CV_64F));
@@ -111,30 +113,52 @@ std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > FeatureMatch::hierarchic
   }
 
   std::vector<cv::Mat> desc_query = FeatureMatch::get_desc_query();
+  std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > > performance;
 
   for(int n_branch = 0; n_branch < (int)branching.size(); ++n_branch) {
+    std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > pp;
   	for(int n_leaf = 0; n_leaf < (int)leaf_size.size(); ++n_leaf) {
-  	   for(int n_L = 0; n_L < (int)L_max.size(); ++n_L) {
+       std::vector< std::vector< std::tuple< int, int, double > > > ppp;
+  	   for(int n_L = 0; n_L < (int)trees.size(); ++n_L) {
     			t_start = std::chrono::high_resolution_clock::now();
+    			cv::flann::Index hKmean = cv::flann::Index(all_features, cv::flann::HierarchicalClusteringIndexParams( branching[n_branch], cvflann::FLANN_CENTERS_RANDOM, trees[n_L], leaf_size[n_leaf]));
+          t_end_build = std::chrono::high_resolution_clock::now();
+          auto build_duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end_build - t_start).count();
 
-    			cv::flann::Index hKmean = cv::flann::Index(all_features, cv::flann::HierarchicalClusteringIndexParams( branching[n_branch], cvflann::FLANN_CENTERS_RANDOM, 1, leaf_size[n_leaf]));
-    			t_midpoint = std::chrono::high_resolution_clock::now();
-    			for(int i = 0; i < number_of_query; ++i)
-    				hKmean.knnSearch(desc_query[i], indicies[i], distance[i], knn, cv::flann::SearchParams(L_max[n_L]));
-    			t_end = std::chrono::high_resolution_clock::now();
+          std::vector< std::tuple< int, int, double > > pppp;
+          int L_max = 50;
+          int dur = 0;
+          double prec = 0;
+          while( dur < linear_duration && prec < 0.97) {
+            t_midpoint = std::chrono::high_resolution_clock::now();
+      			for(int i = 0; i < number_of_query; ++i)
+      				hKmean.knnSearch(desc_query[i], indicies[i], distance[i], knn, cv::flann::SearchParams(L_max));
+      			t_end = std::chrono::high_resolution_clock::now();
 
-    			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_midpoint).count();
-    			auto build_duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_midpoint - t_start).count();
+      			auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(t_end-t_midpoint).count();
 
-          std::cout << "kMean search (B = " << branching[n_branch] << ", Leaf = " << leaf_size[n_leaf] << ", L_max = " << L_max[n_L] << "): " << duration << " (build:" << build_duration << ")" <<  std::endl;
-          double precision = precision_computation(truth_indicies, indicies, number_of_query);
-          std::cout << "PRECISION: " << precision << std::endl;
+            std::cout << "kMean search (B = " << branching[n_branch] << ", Leaf = " << leaf_size[n_leaf] << ", trees = " << trees[n_L] << ", L_max = " << L_max << "): " << duration << " (build:" << build_duration << ")" <<  std::endl;
+            double precision = precision_computation(truth_indicies, indicies, number_of_query);
+            std::cout << "PRECISION: " << precision << std::endl;
+
+            L_max *= 2;
+            std::tuple< int, int, double > tup;
+            tup = std::make_tuple( L_max, duration, precision );
+
+            prec = precision;
+            dur = duration;
+
+            pppp.push_back(tup);
+          }
+          ppp.push_back(pppp);
        }
+       pp.push_back(ppp);
     }
+    performance.push_back(pp);
   }
 
-  std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > ret;
-  return ret = std::make_pair(indicies, distance);
+  std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>,  std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > > > ret;
+  return ret = std::make_tuple(indicies, distance, performance);
 }
 
 double FeatureMatch::precision_computation(std::vector<cv::Mat> truth_indicies, std::vector<cv::Mat> indicies, int queries) {

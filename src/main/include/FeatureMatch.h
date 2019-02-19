@@ -28,6 +28,7 @@ class FeatureMatch {
   std::map< int, std::tuple<int,int,int> > row_to_descriptor;
   std::map< int, std::tuple<int,int> > query_to_image;
   std::vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > query_images;
+  int linear_duration;
 
   public:
     FeatureMatch(
@@ -36,8 +37,8 @@ class FeatureMatch {
     );
     void query_train_split(int);
     std::vector<cv::Mat> get_desc_query();
-    std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > linear_knn(int);
-    std::pair< std::vector<cv::Mat>, std::vector<cv::Mat> > hierarchical_knn_vs_linear(std::vector<cv::Mat>, std::vector<int>, std::vector<int>, std::vector<int>, int);
+    std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>, double > linear_knn(int);
+    std::tuple< std::vector<cv::Mat>, std::vector<cv::Mat>,  std::vector< std::vector< std::vector< std::vector< std::tuple< int, int, double > > > > > > hierarchical_knn_vs_linear(std::vector<cv::Mat>, std::vector<int>, std::vector<int>, std::vector<int>, int);
     void imageMatching(cv::Mat*, cv::Mat*, int);
 
   private:

@@ -33,7 +33,7 @@ int num_patches, images_per_patch;
 int main(int argc, char** argv) {
   vector<Mat> patches;
   ObjectDetection od;
-  string filename("features_data");
+  string filename("features_data.yaml");
 
   vector< String > fn;
   stringstream dirname; dirname << "data/notredame";
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
   }
 
   cout << "Saving features into file..." << endl;
-  save(features, "features_data");
+  save(features, filename);
 
 
   return 0;
