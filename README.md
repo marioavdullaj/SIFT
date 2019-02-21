@@ -15,7 +15,7 @@ The code has been developed using the following framework:
 
 
 The feature_compute program takes in input the number of patches and the number of images per patch set by the user. Consequently, it uses the OpenCV library to interface to the images, and crop them in a 64x64 format, extracting each image from its patch. The SIFT features are then computed and the final results are store in a YAML format file (features_data.yaml).
-The main program then takes this file as input, crops the images of the dataset, and performs both the linear k-NN search and the fast approximate using the hierarchical clustering trees, using the FLANN library provided by OpenCV. Since the experiment requires a considerable amount of time, the results are then store in a YAML format file (results.yaml).
+The main program then takes this file as input, crops the images of the dataset, and performs both the linear k-NN search and the fast approximate using the hierarchical clustering trees for a query of images, using the FLANN library provided by OpenCV. Since the experiment requires a considerable amount of time, the results are then store in a YAML format file (results.yaml).
 
 ## Compile and execution of the project
 The code can be executed by compiling all the project with the provided bash script create.sh.
