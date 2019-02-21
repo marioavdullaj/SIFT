@@ -34,6 +34,12 @@ int main(int argc, char** argv) {
   cout << "Loading the features.." << endl;
   vector< vector< std::pair<std::vector<cv::KeyPoint>, cv::Mat> > > features = load(filename);
 
+  int n_features = 0;
+  for (int i = 0; i < features.size(); i++)
+    for (int j = 0; j < features[i].size(); j++)
+      n_features += (features[i][j].first).size();
+  std::cout << "Number of features: " << n_features << std::endl;
+
   FeatureMatch fm(patches_cropped, features);
   int number_of_query = 10;
   fm.query_train_split(number_of_query);
@@ -49,9 +55,15 @@ int main(int argc, char** argv) {
 
 
   // Hierarchical k-means clustering
+/*
+  // Experiment set up
   std::vector<int> branching{2,4,8,16,32,64};
   std::vector<int> leaf_size{16,150,500};
   std::vector<int> trees{1,2,3,4,8,16};
+*/
+  std::vector<int> branching{32};
+  std::vector<int> leaf_size{150};
+  std::vector<int> trees{8};
 
  	std::tuple< std::vector<cv::Mat>,
 							std::vector<cv::Mat>,
@@ -71,14 +83,17 @@ int main(int argc, char** argv) {
 	These are the indicies and the distance of the last branching, leaf_size and trees parameters.
 	The compute them all do some cycles in the main giving single parameters to the method.
 */
-//  std::vector<cv::Mat> indicies = std::get<0>(hier_ind_dist);
-//  std::vector<cv::Mat> distance = std::get<1>(hier_ind_dist);
+  std::vector<cv::Mat> indicies = std::get<0>(hier_ind_dist);
+  std::vector<cv::Mat> distance = std::get<1>(hier_ind_dist);
 
-/*
-  for(int i = 0; i < number_of_query; ++i) {
+  std::cout << "Feature matching with linear kNN search" << std::endl;
+  for(int i = 0; i < number_of_query; ++i)
 		fm.imageMatching(&truth_indicies[i], &truth_distance[i], i);
-  }
-*/
+
+  std::cout << "Feature matching with fast approximate search" << std::endl;
+  for(int i = 0; i < number_of_query; ++i)
+    fm.imageMatching(&indicies[i], &distance[i], i);
+
 
 	save_results(duration_linear, branching, leaf_size, trees, performance, "results.yaml");
   return 0;
