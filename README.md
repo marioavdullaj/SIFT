@@ -3,7 +3,7 @@ Authors: Alessio Mazzetto, Mario Avdullaj
 
 ## Introduction
 Based on the Fast Matching of Binary Features paper, we developed a C++ program which computes the SIFT
-features of 100.000 gray-scale 64x64 pixel notredame images. These are then used to perform feature matching strategies using a query of images over the entire dataset. Finally, the results of the experiment are store in YAML format files, which are taken in input by a Python script. This script parses the results and plots the graphs using the matplotlib library.
+features of 10.000 gray-scale 64x64 pixel notredame images. These are then used to perform feature matching strategies using a query of images over the entire dataset. Finally, the results of the experiment are store in YAML format files, which are taken in input by a Python script. This script parses the results and plots the graphs using the matplotlib library.
 
 ## Details of the implementation
 The code has been developed using the following framework:
